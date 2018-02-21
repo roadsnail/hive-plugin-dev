@@ -96,9 +96,9 @@ class BasePlugin:
         elif self.isHotWaterRelay(Unit):
             Domoticz.Log("Setting Hot Water Relay State")
             if str(Command) == "On":
-                payload = self.CreateHotWaterPayload("HEAT")
+                payload = self.CreateHotWaterPayload("HEAT") # Android APP Shows as On
             if str(Command) == "Off":
-                payload = self.CreateHotWaterPayload("OFF")
+                payload = self.CreateHotWaterPayload("OFF") # Android APP shows as Off
         else:
             payload = ""
             Domoticz.Log("Unknown Device Type")
@@ -433,9 +433,12 @@ class BasePlugin:
         response = {}
         nodes = []
         attributes = {}
-        state = {}
-        state["targetValue"] = State
-        attributes["attributes"] = {"activeHeatCoolMode":state}
+        if State == "HEAT":
+            Domoticz.Debug('HW On')
+            attributes["attributes"] = {"activeHeatCoolMode": {"targetValue": "HEAT"},"activeScheduleLock": {"targetValue": "True"}}
+        if State == "OFF":
+            Domoticz.Debug('HW Off')
+            attributes["attributes"] = {"activeHeatCoolMode": {"targetValue": "OFF"},"activeScheduleLock": {"targetValue": "False"}}
         nodes.append(attributes)
         response["nodes"] = nodes
         return response

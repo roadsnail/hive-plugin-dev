@@ -103,9 +103,6 @@ class BasePlugin:
             payload = ""
             Domoticz.Log("Unknown Device Type")
         if payload != "":
-            Domoticz.Log("Writing payload to Hive")
-            Domoticz.Debug('Payload is ' + str(payload))
-
             req = Request(url, data = json.dumps(payload).encode('ascii'), headers = headers, unverifiable = True)
             req.get_method = lambda : 'PUT'
             try:
@@ -122,8 +119,6 @@ class BasePlugin:
     def onHeartbeat(self):
         Domoticz.Debug('onHeartbeat called')
         if self.counter >= self.multiplier:
-
-            #DumpConfigToLog()
             foundInsideDevice = False
             foundTargetDevice = False
             foundHeatingDevice = False
@@ -205,7 +200,6 @@ class BasePlugin:
             if thermostatW: # HotWater too...
                 hotwater = thermostatW["attributes"]["stateHotWaterRelay"]["reportedValue"]
                 hw_id = thermostatW["id"]
-                Domoticz.Debug('Updating Devices.. Hot Water Relay')
                 for unit in Devices:
                     if Devices[unit].DeviceID == hw_id:
                         if unit not in set(self.hwrelaySet):
@@ -231,7 +225,6 @@ class BasePlugin:
                                     else:
                                         Devices[unit].Update(nValue=0, sValue='Off')
                 if foundHotWaterDevice == False:
-                    Domoticz.Debug('Creating new Hot Water Relay Switch Device')
                     Domoticz.Device(Name = 'HotWater - Relay', Unit = self.GetNextUnit(False), TypeName = 'Switch', Switchtype = 0, DeviceID = hw_id).Create()
                     self.counter = self.multiplier
             else:
@@ -343,6 +336,8 @@ class BasePlugin:
                     r = urlopen(req).read().decode('utf-8')
                 else:
                     Domoticz.Log(str(e))
+            except Exception as e:
+                Domoticz.Log(str(e))
             try:
                 nodes = json.loads(r)['nodes']
             except Exception as e:

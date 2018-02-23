@@ -202,9 +202,9 @@ class BasePlugin:
                 hw_id = thermostatW["id"]
                 for unit in Devices:
                     if Devices[unit].DeviceID == hw_id:
-                        foundHotWaterDevice = True
                         if unit not in set(self.hwrelaySet):
                             self.hwrelaySet.add(unit)
+                        foundHotWaterDevice = True
                         if thermostatui["attributes"]["presence"]["reportedValue"] == "ABSENT":
                             if self.TimedOutAvailable:
                                 if Devices[unit].TimedOut == 0:

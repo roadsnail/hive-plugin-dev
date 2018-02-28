@@ -1,5 +1,5 @@
 '''
-<plugin key="HivePlug" name="Hive Plugin" author="imcfarla and MikeF" version="0.4" wikilink="http://www.domoticz.com/wiki/plugins/plugin.html" externallink="https://github.com/imcfarla2003/domoticz-hive">
+<plugin key="HivePlug" name="Hive Plugin" author="imcfarla and MikeF" version="0.4" wikilink="http://www.domoticz.com/wiki/plugins/plugin.html" externallink="https://github.com/roadsnail/hive-plugin-dev">
     <params>
         <param field="Username" label="Hive Username" width="200px" required="true" default=""/>
         <param field="Password" label="Hive Password" width="200px" required="true" default=""/>
@@ -131,6 +131,7 @@ class BasePlugin:
             foundHeatingDevice = False
             foundThermostatDevice = False
             foundHotWaterDevice = False
+            foundFrostStatDevice = False
 
             Domoticz.Debug('Getting Data')
             self.counter = 1
@@ -140,6 +141,8 @@ class BasePlugin:
             if thermostat:
                 # get the temperature and heating states
                 ch_id = thermostat["id"]	# Central Heating ID is same as Thermostat ID
+                frostsetting = thermostat["attributes"]["frostProtectTemperature"]["reportedValue"]
+                Domoticz.Debug('Frost Setting = ' + str(frostsetting))
                 temp = thermostat["attributes"]["temperature"]["reportedValue"]
                 Domoticz.Debug('Temp = ' + str(temp))
                 targetTemp = thermostat["attributes"]["targetHeatTemperature"]["reportedValue"]
@@ -188,9 +191,12 @@ class BasePlugin:
                                     else:
                                         Devices[unit].Update(nValue=0, sValue='Off')
                     if Devices[unit].DeviceID == thermostat['id']:
-                        foundThermostatDevice = True
-                        if Devices[unit].Type == 242: #Thermostat
-                           Devices[unit].Update(nValue = int(targetTemp), sValue = str(targetTemp), BatteryLevel = int(thermostat_battery), SignalLevel = int(thermostat_rssi)) 
+                        if Devices[unit].Type == 242 and Devices[unit].SubType == 1: #Thermostat is type 242
+                           foundThermostatDevice = True
+                           Devices[unit].Update(nValue = int(targetTemp), sValue = str(targetTemp), BatteryLevel = int(thermostat_battery), SignalLevel = int(thermostat_rssi))
+                    if Devices[unit].DeviceID == "FrostStat": #FrostStat
+                        foundFrostStatDevice = True
+                        Devices[unit].Update(nValue = int(frostsetting), sValue = str(frostsetting)) 						   
                 if foundInsideDevice == False:
                     Domoticz.Device(Name = 'Inside', Unit = self.GetNextUnit(False), TypeName = 'Temperature', DeviceID = 'Hive_Inside').Create()
                     self.counter = self.multiplier
@@ -202,6 +208,10 @@ class BasePlugin:
                     self.counter = self.multiplier
                 if foundThermostatDevice == False:
                     Domoticz.Device(Name = 'Thermostat', Unit = self.GetNextUnit(False), Type = 242, Subtype = 1, DeviceID = thermostat['id']).Create()
+                    self.counter = self.multiplier
+                if foundFrostStatDevice == False:
+                    Domoticz.Debug('making froststat device')
+                    Domoticz.Device(Name = 'Froststat', Unit = self.GetNextUnit(False), Type = 242, Subtype = 1, DeviceID = 'FrostStat').Create()
                     self.counter = self.multiplier
             else:
                  Domoticz.Debug('No heating thermostat found')
